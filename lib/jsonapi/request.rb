@@ -354,17 +354,34 @@ module JSONAPI
     def parse_add_operation(data)
       Array.wrap(data).each do |params|
         verify_type(params[:type])
-
-        data = parse_params(params, creatable_fields)
-        @operations.push JSONAPI::CreateResourceOperation.new(
-          @resource_klass,
-          context: @context,
-          data: data
-        )
+        if (@resource_klass.name.demodulize == 'CarduserResource' && (Carduser.find_by_id params[:id]))
+          parse_single_replace_operation(params, [params[:id]], id_key_presence_check_required: params[:id].present?)
+        else
+          data = parse_params(params, creatable_fields)
+          @operations.push JSONAPI::CreateResourceOperation.new(
+            @resource_klass,
+            context: @context,
+            data: data
+          )
+        end
       end
     rescue JSONAPI::Exceptions::Error => e
       @errors.concat(e.errors)
     end
+    # def parse_add_operation(data)
+    #   Array.wrap(data).each do |params|
+    #     verify_type(params[:type])
+
+    #     data = parse_params(params, creatable_fields)
+    #     @operations.push JSONAPI::CreateResourceOperation.new(
+    #       @resource_klass,
+    #       context: @context,
+    #       data: data
+    #     )
+    #   end
+    # rescue JSONAPI::Exceptions::Error => e
+    #   @errors.concat(e.errors)
+    # end
 
     def verify_type(type)
       if type.nil?
